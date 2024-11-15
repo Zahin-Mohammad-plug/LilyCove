@@ -386,7 +386,7 @@ button {
   width: 100%;
   height: auto;
   aspect-ratio: 407 / 206;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 10px;
   transition: transform 0.3s ease;
   /* Adds smooth transition on hover */
