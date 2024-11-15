@@ -12,9 +12,9 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="\assets/images/icons/pageIcon2.png" type="image/png">
+  <link rel="icon" href="/assets/images/icons/pageIcon2.png" type="image/png">
   <title>Pokemon Expansion Sets</title>
-  <link rel="stylesheet" href="\assets\css\styles.css">
+  <link rel="stylesheet" href="/assets/css/styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script type="module" src="/assets/js/firebase-init.js"></script>
@@ -22,12 +22,12 @@
 <body>
   <header>
     <div class="logo">
-      <img src="\assets\images\icons\pagelogo.png" alt="LilyCove Logo" style="height: 50px;"> <!-- Adjust 'height' as needed -->
+      <img src="/assets/images/icons/pagelogo.png" alt="LilyCove Logo" style="height: 50px;">
     </div>
     <input type="text" placeholder="Search for cards, sets, tcg">
     <nav>
-      <a href="\index.html">Home</a>
-      <a href="\components\sets.html">Pokemon</a>
+      <a href="/index.html">Home</a>
+      <a href="/components/sets.html">Pokemon</a>
     </nav>
     <div class="user-icons">
       <i class="fas fa-user"></i> <!-- User Icon -->
@@ -36,7 +36,6 @@
     </div>
   </header>
 
-
   <main>
     <section class="expansion-header">
       <h1>Pokemon Expansion Sets</h1>
@@ -44,43 +43,48 @@
         <a href="#" class="active">English</a>
         <a href="#">Japanese</a>
       </div>
-	  <hr class="divider"> <!-- Divider line below the language options -->
+      <hr class="divider"> <!-- Divider line below the language options -->
     </section>
 
-    <section class="expansion-grid">
-      <a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\shrouded.png" alt="Sword & Shield—Fabled">
-				<p>Sword & Shield—Fabled</p>
-						</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\twilight.png" alt="Sword & Shield—Masquerade">
-				<p>Sword & Shield—Masquerade</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\temporal.png" alt="Sword & Shield—Temporal Forces">
-				<p>Sword & Shield—Temporal Forces</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\pararift.png" alt="Paradox Rift">
-				<p>Paradox Rift</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\ssfates.png" alt="Sword & Shield—Fates">
-				<p>Sword & Shield—Fates</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\151.png" alt="151°">
-				<p>151</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\paldeanE.png" alt="Paldean Evolved">
-				<p>Paldean Evolved</p>
-			</a>
-			<a href="cards.html" class="expansion-item">
-				<img src="\assets\images\sets\obsidian.png" alt="Obsidian Flames">
-				<p>Obsidian Flames</p>
-			</a>
+    <section class="expansion-grid" id="expansion-grid">
+      <!-- Expansion sets will be dynamically loaded here -->
     </section>
   </main>
+
+  <script type="module">    
+    // Import Firestore from Firebase
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // Access the Firestore instance from firebase-init.js
+    const db = getFirestore();
+
+    // Function to load sets data
+    async function loadSets() {
+      const expansionGrid = document.getElementById('expansion-grid');
+      const setsCollection = collection(db, 'sets'); // Make sure 'sets' is your collection name
+      const setsSnapshot = await getDocs(setsCollection);
+
+      setsSnapshot.forEach(doc => {
+        const setData = doc.data();
+        const setElement = document.createElement('a');
+        setElement.href = `cards.html?set=${setData.id}`; // Link to cards page with set ID
+        setElement.classList.add('expansion-item');
+
+        const img = document.createElement('img');
+        img.src = setData.imageUrls.logo; // Make sure this matches your Firestore data
+        img.alt = setData.name;
+        setElement.appendChild(img);
+
+        const p = document.createElement('p');
+        p.textContent = setData.name;
+        setElement.appendChild(p);
+
+        expansionGrid.appendChild(setElement);
+      });
+    }
+
+    // Load sets on page load
+    loadSets();
+  </script>
 </body>
 </html>
