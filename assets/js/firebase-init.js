@@ -17,3 +17,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
+
+// Enable offline persistence
+enableIndexedDbPersistence(db)
+  .catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.error("Persistence failed: Multiple tabs open.");
+    } else if (err.code === 'unimplemented') {
+      console.error("Persistence is not available in this browser.");
+    }
+  });

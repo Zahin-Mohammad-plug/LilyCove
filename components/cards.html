@@ -22,73 +22,107 @@
 
     // Initialize Firestore
     const db = getFirestore();
-
+    
+    // Function to load Cards with caching
     async function loadCards() {
       const cardsGrid = document.getElementById('cards-grid');
       cardsGrid.innerHTML = ''; // Clear any existing content
-
+    
       // Extract the set or series ID from the URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const setId = urlParams.get('set');
       const seriesId = urlParams.get('series');
-
+    
       if (!setId && !seriesId) {
         console.error('No setId or seriesId found in the URL');
         return;
       }
-
-      try {
-        // Query Firestore based on setId or seriesId
-        const cardsCollection = collection(db, 'cards');
-        let q;
-        if (setId) {
-          q = query(cardsCollection, where('set.id', '==', setId)); // Query by set ID
-        } else if (seriesId) {
-          q = query(cardsCollection, where('set.series', '==', seriesId)); // Query by series ID
+    
+      // Decode the setId or seriesId to handle special characters
+      const decodedSetId = setId ? decodeURIComponent(setId) : null;
+      const decodedSeriesId = seriesId ? decodeURIComponent(seriesId) : null;
+    
+      // Check for cached data
+      const cacheKey = decodedSetId ? `cardsData-${decodedSetId}` : `cardsData-${decodedSeriesId}`;
+      const cachedCards = getFromLocalStorage(cacheKey);
+    
+      if (cachedCards) {
+        console.log('Loading cards from cache');
+        renderCards(cachedCards, cardsGrid); // Render using cached data
+      } else {
+        console.log('Fetching cards from Firestore');
+        try {
+          // Query Firestore based on setId or seriesId
+          const cardsCollection = collection(db, 'cards');
+          let q;
+          if (decodedSetId) {
+            q = query(cardsCollection, where('set.id', '==', decodedSetId));
+          } else if (decodedSeriesId) {
+            q = query(cardsCollection, where('set.series', '==', decodedSeriesId));
+          }
+    
+          const querySnapshot = await getDocs(q);
+          if (querySnapshot.empty) {
+            console.warn('No cards found for the specified set or series');
+          }
+    
+          const cardsData = querySnapshot.docs.map(doc => {
+            return { id: doc.id, ...doc.data() };
+          });
+    
+          // Save to localStorage
+          saveToLocalStorage(cacheKey, cardsData);
+    
+          renderCards(cardsData, cardsGrid); // Render using fetched data
+        } catch (error) {
+          console.error('Error fetching cards from Firestore:', error);
         }
-
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-          console.warn('No cards found for the specified set or series');
-        }
-
-        querySnapshot.forEach((doc) => {
-          const cardData = doc.data();
-
-          // Create card elements dynamically
-          const cardElement = document.createElement('a');
-          cardElement.href = `card.html?id=${doc.id}`; // Include the card ID in the URL
-          cardElement.classList.add('cards-item');
-          cardElement.setAttribute('data-name', cardData.name);
-          cardElement.setAttribute('data-price', cardData.tcgplayer?.prices?.holofoil?.market || '0');
-          cardElement.setAttribute('data-rarity', cardData.rarity || '0');
-
-          const img = document.createElement('img');
-          img.src = cardData.images?.large || '/path/to/placeholder-card.png'; // Use a placeholder if no image is available
-          img.alt = cardData.name;
-          cardElement.appendChild(img);
-
-          const nameElement = document.createElement('h3');
-          nameElement.textContent = cardData.name;
-          cardElement.appendChild(nameElement);
-
-          const rarityElement = document.createElement('p');
-          rarityElement.textContent = cardData.rarity || 'Common';
-          cardElement.appendChild(rarityElement);
-
-          const priceElement = document.createElement('p');
-          priceElement.textContent = `$${cardData.tcgplayer?.prices?.holofoil?.market || '0.00'}`;
-          cardElement.appendChild(priceElement);
-
-          cardsGrid.appendChild(cardElement);
-        });
-
-        updateCardCount();
-      } catch (error) {
-        console.error('Error fetching cards from Firestore:', error);
       }
+    
+      updateCardCount();
     }
-
+    
+    // Helper function to render cards
+    function renderCards(cardsData, container) {
+      cardsData.forEach(cardData => {
+        const cardElement = document.createElement('a');
+        cardElement.href = `card.html?id=${cardData.id}`;
+        cardElement.classList.add('cards-item');
+        cardElement.setAttribute('data-name', cardData.name);
+        cardElement.setAttribute('data-price', cardData.tcgplayer?.prices?.holofoil?.market || '0');
+        cardElement.setAttribute('data-rarity', cardData.rarity || '0');
+    
+        const img = document.createElement('img');
+        img.src = cardData.images?.large || '/path/to/placeholder-card.png';
+        img.alt = cardData.name;
+        cardElement.appendChild(img);
+    
+        const nameElement = document.createElement('h3');
+        nameElement.textContent = cardData.name;
+        cardElement.appendChild(nameElement);
+    
+        const rarityElement = document.createElement('p');
+        rarityElement.textContent = cardData.rarity || 'Common';
+        cardElement.appendChild(rarityElement);
+    
+        const priceElement = document.createElement('p');
+        priceElement.textContent = `$${cardData.tcgplayer?.prices?.holofoil?.market || '0.00'}`;
+        cardElement.appendChild(priceElement);
+    
+        container.appendChild(cardElement);
+      });
+    }
+    
+    // Helper functions for localStorage
+    function saveToLocalStorage(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+    
+    function getFromLocalStorage(key) {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
+    }
+    
     // Load cards on page load
     window.onload = loadCards;
   </script>

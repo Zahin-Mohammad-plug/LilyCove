@@ -19,61 +19,109 @@
   <script type="module" src="/assets/js/firebase-init.js"></script>
   <script type="module">
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
+  
     const db = getFirestore();
-    
-    // Function to load Series
+  
+    // Function to load Series with caching
     async function loadSeries() {
       const seriesGrid = document.querySelector('.expansion-grid.series');
       seriesGrid.innerHTML = ''; // Clear any existing content
-    
-      // Load Series
-      const seriesCollection = collection(db, 'series');
-      const seriesSnapshot = await getDocs(seriesCollection);
-      seriesSnapshot.forEach((doc) => {
-        const seriesData = doc.data();
-        const seriesElement = document.createElement('a');
-        seriesElement.href = `cards.html?series=${doc.id}`;
-        seriesElement.classList.add('expansion-item');
-    
-        const img = document.createElement('img');
-        img.src = seriesData.imageUrl || '/path/to/placeholder-logo.png';
-        img.alt = seriesData.id;
-        seriesElement.appendChild(img);
-    
-        const nameElement = document.createElement('p');
-        nameElement.textContent = seriesData.id;
-        seriesElement.appendChild(nameElement);
-    
-        seriesGrid.appendChild(seriesElement);
-      });
+
+      // Check for cached data
+      const cachedSeries = getFromLocalStorage('seriesData');
+      if (cachedSeries) {
+        console.log('Loading series from cache');
+        renderSeries(cachedSeries, seriesGrid); // Render using cached data
+      } else {
+        console.log('Fetching series from Firestore');
+        // Fetch from Firestore if no cached data
+        const seriesCollection = collection(db, 'series');
+        const seriesSnapshot = await getDocs(seriesCollection);
+        const seriesData = seriesSnapshot.docs.map(doc => {
+          return { id: doc.id, ...doc.data() };
+        });
+
+        // Save to localStorage
+        saveToLocalStorage('seriesData', seriesData);
+
+        renderSeries(seriesData, seriesGrid); // Render using fetched data
+      }
     }
-    
-    // Function to load Sets
+
+    // Function to load Sets with caching
     async function loadSets() {
       const setsGrid = document.querySelector('.expansion-grid.sets');
       setsGrid.innerHTML = ''; // Clear sets content
-    
-      // Load Sets
-      const setsCollection = collection(db, 'sets');
-      const setsSnapshot = await getDocs(setsCollection);
-      setsSnapshot.forEach((doc) => {
-        const setData = doc.data();
-        const setElement = document.createElement('a');
-        setElement.href = `cards.html?set=${doc.id}`;
-        setElement.classList.add('expansion-item');
-    
+
+      // Check for cached data
+      const cachedSets = getFromLocalStorage('setsData');
+      if (cachedSets) {
+        console.log('Loading sets from cache');
+        renderSets(cachedSets, setsGrid); // Render using cached data
+      } else {
+        console.log('Fetching sets from Firestore');
+        // Fetch from Firestore if no cached data
+        const setsCollection = collection(db, 'sets');
+        const setsSnapshot = await getDocs(setsCollection);
+        const setsData = setsSnapshot.docs.map(doc => {
+          return { id: doc.id, ...doc.data() };
+        });
+
+        // Save to localStorage
+        saveToLocalStorage('setsData', setsData);
+
+        renderSets(setsData, setsGrid); // Render using fetched data
+      }
+    }
+
+    // Helper function to render series data
+    function renderSeries(seriesData, container) {
+      seriesData.forEach(series => {
+        const seriesElement = document.createElement('a');
+        seriesElement.href = `cards.html?series=${encodeURIComponent(series.id)}`;
+        seriesElement.classList.add('expansion-item');
+
         const img = document.createElement('img');
-        img.src = setData.imageUrls.logo || '/path/to/placeholder-logo.png';
-        img.alt = setData.name;
-        setElement.appendChild(img);
-    
+        img.src = series.imageUrl || '/path/to/placeholder-logo.png';
+        img.alt = series.id;
+        seriesElement.appendChild(img);
+
         const nameElement = document.createElement('p');
-        nameElement.textContent = setData.name;
-        setElement.appendChild(nameElement);
-    
-        setsGrid.appendChild(setElement);
+        nameElement.textContent = series.id;
+        seriesElement.appendChild(nameElement);
+
+        container.appendChild(seriesElement);
       });
+    }
+
+    // Helper function to render sets data
+    function renderSets(setsData, container) {
+      setsData.forEach(set => {
+        const setElement = document.createElement('a');
+        setElement.href = `cards.html?set=${encodeURIComponent(set.id)}`;
+        setElement.classList.add('expansion-item');
+
+        const img = document.createElement('img');
+        img.src = set.imageUrls.logo || '/path/to/placeholder-logo.png';
+        img.alt = set.name;
+        setElement.appendChild(img);
+
+        const nameElement = document.createElement('p');
+        nameElement.textContent = set.name;
+        setElement.appendChild(nameElement);
+
+        container.appendChild(setElement);
+      });
+    }
+
+    // Helper functions for localStorage
+    function saveToLocalStorage(key, data) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    function getFromLocalStorage(key) {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : null;
     }
     
     // Toggle visibility and load data when needed
@@ -82,10 +130,10 @@
       const setsLink = document.querySelector('.language-options a.sets-link');
       const seriesGrid = document.querySelector('.expansion-grid.series');
       const setsGrid = document.querySelector('.expansion-grid.sets');
-    
+  
       // Load Series by default
       loadSeries();
-    
+  
       // Event listener for Series link
       seriesLink.addEventListener('click', () => {
         seriesGrid.style.display = 'grid';
@@ -93,19 +141,18 @@
         seriesLink.classList.add('active');
         setsLink.classList.remove('active');
       });
-    
+  
       // Event listener for Sets link
       setsLink.addEventListener('click', () => {
         setsGrid.style.display = 'grid';
         seriesGrid.style.display = 'none';
         setsLink.classList.add('active');
         seriesLink.classList.remove('active');
-    
+  
         // Call loadSets unconditionally
         loadSets();
       });
     });
-    
   </script>
   
 </head>
