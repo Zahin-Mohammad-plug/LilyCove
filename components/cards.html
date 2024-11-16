@@ -27,20 +27,30 @@
       const cardsGrid = document.getElementById('cards-grid');
       cardsGrid.innerHTML = ''; // Clear any existing content
 
-      // Extract the set ID from the URL parameters
+      // Extract the set or series ID from the URL parameters
       const urlParams = new URLSearchParams(window.location.search);
       const setId = urlParams.get('set');
+      const seriesId = urlParams.get('series');
 
-      if (!setId) {
-        console.error('No setId found in the URL');
+      if (!setId && !seriesId) {
+        console.error('No setId or seriesId found in the URL');
         return;
       }
 
       try {
-        // Query Firestore to get cards for the specified set
+        // Query Firestore based on setId or seriesId
         const cardsCollection = collection(db, 'cards');
-        const q = query(cardsCollection, where('set.id', '==', setId)); // Ensure 'set.id' is the correct path in your document structure
+        let q;
+        if (setId) {
+          q = query(cardsCollection, where('set.id', '==', setId)); // Query by set ID
+        } else if (seriesId) {
+          q = query(cardsCollection, where('set.series', '==', seriesId)); // Query by series ID
+        }
+
         const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          console.warn('No cards found for the specified set or series');
+        }
 
         querySnapshot.forEach((doc) => {
           const cardData = doc.data();
@@ -71,8 +81,9 @@
           cardElement.appendChild(priceElement);
 
           cardsGrid.appendChild(cardElement);
-          updateCardCount();
         });
+
+        updateCardCount();
       } catch (error) {
         console.error('Error fetching cards from Firestore:', error);
       }
@@ -133,7 +144,6 @@
       document.getElementById('card-count').textContent = visibleCards.length;
     }
 
-
     // Search Functionality
     document.getElementById('card-search').addEventListener('input', function () {
       const query = this.value.toLowerCase();
@@ -141,16 +151,13 @@
 
       cards.forEach(card => {
         const cardName = card.getAttribute('data-name').toLowerCase();
-
-        // Show/Hide card based on whether it matches the search query
         if (cardName.includes(query)) {
           card.style.display = 'block';
         } else {
           card.style.display = 'none';
         }
       });
-        // Update the card count after filtering
-        updateCardCount();
+      updateCardCount();
     });
 
     // Sort Functionality
@@ -160,7 +167,6 @@
       const cards = Array.from(document.querySelectorAll('.cards-item'));
 
       let sortedCards;
-
       if (sortBy === 'price-low-high') {
         sortedCards = cards.sort((a, b) => parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price')));
       } else if (sortBy === 'price-high-low') {
@@ -173,14 +179,10 @@
         sortedCards = cards.sort((a, b) => parseInt(a.getAttribute('data-rarity')) - parseInt(b.getAttribute('data-rarity')));
       }
 
-      // Clear the grid and append the sorted cards
       cardsGrid.innerHTML = '';
       sortedCards.forEach(card => cardsGrid.appendChild(card));
-
-        // Update the card count after filtering
-        updateCardCount();
+      updateCardCount();
     }
-    
   </script>
 </body>
 </html>
