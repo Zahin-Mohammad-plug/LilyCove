@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "fetch": "node backend/fetchData.js",
+    "updateSeries": "node backend/CreateSeriesData.js",
     "uploadToCloudinary": "node backend/upload2Cloudinary.js",    
-    "uploadToFirebase": "node backend/uploadFireBaseData.js",
-    "updateAll": "npm run fetch && npm run uploadToCloudinary && npm run uploadToFirebase"
+    "uploadToFB": "node backend/uploadFireBaseData.js",
+    "updateAll": "npm run fetch && npm run uploadToCloudinary && npm run uploadToFB"
   },
   "keywords": [],
   "author": "Zahin Mohammad",

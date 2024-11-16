@@ -20,38 +20,94 @@
   <script type="module">
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-    // Initialize Firestore
     const db = getFirestore();
-
+    
+    // Function to load Series
+    async function loadSeries() {
+      const seriesGrid = document.querySelector('.expansion-grid.series');
+      seriesGrid.innerHTML = ''; // Clear any existing content
+    
+      // Load Series
+      const seriesCollection = collection(db, 'series');
+      const seriesSnapshot = await getDocs(seriesCollection);
+      seriesSnapshot.forEach((doc) => {
+        const seriesData = doc.data();
+        const seriesElement = document.createElement('a');
+        seriesElement.href = `cards.html?series=${doc.id}`;
+        seriesElement.classList.add('expansion-item');
+    
+        const img = document.createElement('img');
+        img.src = seriesData.imageUrl || '/path/to/placeholder-logo.png';
+        img.alt = seriesData.id;
+        seriesElement.appendChild(img);
+    
+        const nameElement = document.createElement('p');
+        nameElement.textContent = seriesData.id;
+        seriesElement.appendChild(nameElement);
+    
+        seriesGrid.appendChild(seriesElement);
+      });
+    }
+    
+    // Function to load Sets
     async function loadSets() {
-      const setsGrid = document.querySelector('.expansion-grid');
-      setsGrid.innerHTML = ''; // Clear any existing content
-
+      const setsGrid = document.querySelector('.expansion-grid.sets');
+      setsGrid.innerHTML = ''; // Clear sets content
+    
+      // Load Sets
       const setsCollection = collection(db, 'sets');
-      const querySnapshot = await getDocs(setsCollection);
-
-      querySnapshot.forEach((doc) => {
+      const setsSnapshot = await getDocs(setsCollection);
+      setsSnapshot.forEach((doc) => {
         const setData = doc.data();
         const setElement = document.createElement('a');
-        setElement.href = `cards.html?set=${doc.id}`; // Navigate to cards.html with setId
+        setElement.href = `cards.html?set=${doc.id}`;
         setElement.classList.add('expansion-item');
-
+    
         const img = document.createElement('img');
-        img.src = setData.imageUrls.logo || '/path/to/placeholder-logo.png'; // Use a placeholder if no logo
+        img.src = setData.imageUrls.logo || '/path/to/placeholder-logo.png';
         img.alt = setData.name;
         setElement.appendChild(img);
-
+    
         const nameElement = document.createElement('p');
         nameElement.textContent = setData.name;
         setElement.appendChild(nameElement);
-
+    
         setsGrid.appendChild(setElement);
       });
     }
-
-    // Load sets on page load
-    window.onload = loadSets;
+    
+    // Toggle visibility and load data when needed
+    document.addEventListener('DOMContentLoaded', () => {
+      const seriesLink = document.querySelector('.language-options a.series-link');
+      const setsLink = document.querySelector('.language-options a.sets-link');
+      const seriesGrid = document.querySelector('.expansion-grid.series');
+      const setsGrid = document.querySelector('.expansion-grid.sets');
+    
+      // Load Series by default
+      loadSeries();
+    
+      // Event listener for Series link
+      seriesLink.addEventListener('click', () => {
+        seriesGrid.style.display = 'grid';
+        setsGrid.style.display = 'none';
+        seriesLink.classList.add('active');
+        setsLink.classList.remove('active');
+      });
+    
+      // Event listener for Sets link
+      setsLink.addEventListener('click', () => {
+        setsGrid.style.display = 'grid';
+        seriesGrid.style.display = 'none';
+        setsLink.classList.add('active');
+        seriesLink.classList.remove('active');
+    
+        // Call loadSets unconditionally
+        loadSets();
+      });
+    });
+    
   </script>
+  
 </head>
 <body>
   <header>
@@ -70,18 +126,23 @@
     </div>
   </header>
 
+
   <main>
     <section class="expansion-header">
       <h1>Pokemon Expansion Sets</h1>
       <div class="language-options">
-        <a href="#" class="active">English</a>
-        <a href="#">Japanese</a>
+        <a href="#" class="active series-link">Series</a>
+        <a href="#" class="sets-link">Sets</a>
       </div>
       <hr class="divider">
     </section>
 
-    <section class="expansion-grid">
-      <!-- Sets will be dynamically loaded here -->
+    <section class="expansion-grid series">
+      <!-- Series will load first -->
+    </section>
+
+    <section class="expansion-grid sets">
+      <!-- Sets will load here but hidden by default -->
     </section>
   </main>
 </body>
