@@ -5,9 +5,8 @@
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CJSBHB1TS4"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+    function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
     gtag('config', 'G-CJSBHB1TS4');
   </script>
   <meta charset="UTF-8">
@@ -18,6 +17,41 @@
   <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script type="module" src="/assets/js/firebase-init.js"></script>
+  <script type="module">
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+    // Initialize Firestore
+    const db = getFirestore();
+
+    async function loadSets() {
+      const setsGrid = document.querySelector('.expansion-grid');
+      setsGrid.innerHTML = ''; // Clear any existing content
+
+      const setsCollection = collection(db, 'sets');
+      const querySnapshot = await getDocs(setsCollection);
+
+      querySnapshot.forEach((doc) => {
+        const setData = doc.data();
+        const setElement = document.createElement('a');
+        setElement.href = `cards.html?set=${doc.id}`; // Navigate to cards.html with setId
+        setElement.classList.add('expansion-item');
+
+        const img = document.createElement('img');
+        img.src = setData.imageUrls.logo || '/path/to/placeholder-logo.png'; // Use a placeholder if no logo
+        img.alt = setData.name;
+        setElement.appendChild(img);
+
+        const nameElement = document.createElement('p');
+        nameElement.textContent = setData.name;
+        setElement.appendChild(nameElement);
+
+        setsGrid.appendChild(setElement);
+      });
+    }
+
+    // Load sets on page load
+    window.onload = loadSets;
+  </script>
 </head>
 <body>
   <header>
@@ -30,9 +64,9 @@
       <a href="/components/sets.html">Pokemon</a>
     </nav>
     <div class="user-icons">
-      <i class="fas fa-user"></i> <!-- User Icon -->
-      <i class="fas fa-sign-out-alt"></i> <!-- Logout Icon -->
-      <i class="fas fa-bell"></i> <!-- Notifications Icon -->
+      <i class="fas fa-user"></i>
+      <i class="fas fa-sign-out-alt"></i>
+      <i class="fas fa-bell"></i>
     </div>
   </header>
 
@@ -43,48 +77,12 @@
         <a href="#" class="active">English</a>
         <a href="#">Japanese</a>
       </div>
-      <hr class="divider"> <!-- Divider line below the language options -->
+      <hr class="divider">
     </section>
 
-    <section class="expansion-grid" id="expansion-grid">
-      <!-- Expansion sets will be dynamically loaded here -->
+    <section class="expansion-grid">
+      <!-- Sets will be dynamically loaded here -->
     </section>
   </main>
-
-  <script type="module">    
-    // Import Firestore from Firebase
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-
-    // Access the Firestore instance from firebase-init.js
-    const db = getFirestore();
-
-    // Function to load sets data
-    async function loadSets() {
-      const expansionGrid = document.getElementById('expansion-grid');
-      const setsCollection = collection(db, 'sets'); // Make sure 'sets' is your collection name
-      const setsSnapshot = await getDocs(setsCollection);
-
-      setsSnapshot.forEach(doc => {
-        const setData = doc.data();
-        const setElement = document.createElement('a');
-        setElement.href = `cards.html?set=${setData.id}`; // Link to cards page with set ID
-        setElement.classList.add('expansion-item');
-
-        const img = document.createElement('img');
-        img.src = setData.imageUrls.logo; // Make sure this matches your Firestore data
-        img.alt = setData.name;
-        setElement.appendChild(img);
-
-        const p = document.createElement('p');
-        p.textContent = setData.name;
-        setElement.appendChild(p);
-
-        expansionGrid.appendChild(setElement);
-      });
-    }
-
-    // Load sets on page load
-    loadSets();
-  </script>
 </body>
 </html>
