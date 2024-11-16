@@ -1,28 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-        <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-CJSBHB1TS4"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
+      function gtag() { dataLayer.push(arguments); }
       gtag('js', new Date());
-
       gtag('config', 'G-CJSBHB1TS4');
     </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/assets/images/icons/pageIcon2.png" type="image/png">
-    <title>Squirtle - Lily Cove</title>
+    <title>Loading... - Lily Cove</title> <!-- Initial title placeholder -->
     <link rel="stylesheet" href="/assets/css/styles.css" />
     <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <script type="module" src="/assets/js/firebase-init.js"></script>
+    <script type="module">
+      import { getFirestore, doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+      // Initialize Firestore
+      const db = getFirestore();
+
+      async function loadCardData() {
+        // Extract the card ID from the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const cardId = urlParams.get('id');
+
+        if (!cardId) {
+          console.error('No cardId found in the URL');
+          return;
+        }
+
+        try {
+          // Fetch the card data from Firestore
+          const cardDocRef = doc(db, 'cards', cardId);
+          const cardDoc = await getDoc(cardDocRef);
+
+          if (cardDoc.exists()) {
+            const cardData = cardDoc.data();
+
+            // Update the title of the page
+            document.title = `${cardData.name} ${cardData.number} - LilyCove`;
+
+            // Update the card information on the page
+            document.querySelector('.card-text h1').textContent = cardData.name;
+            document.querySelector('.card-text p').textContent = `${cardData.supertype} - ${cardData.set.name}`;
+            document.querySelector('.card-text p:nth-child(3)').textContent = `${cardData.rarity} - ${cardData.number}/${cardData.set.printedTotal}`;
+
+            // Update the card image
+            const cardImage = document.querySelector('.card-image');
+            cardImage.src = cardData.images?.large || '/path/to/placeholder-card.png';
+            cardImage.alt = cardData.name;
+
+            // Load related cards
+            loadRelatedCards(cardData);
+          } else {
+            console.error('No such document!');
+          }
+        } catch (error) {
+          console.error('Error fetching card data from Firestore:', error);
+        }
+      }
+
+      async function loadRelatedCards(cardData) {
+        const relatedCardsContainer = document.querySelector('.related-cards');
+        relatedCardsContainer.innerHTML = ''; // Clear existing content
+
+        try {
+          const relatedQueries = [];
+
+          // Fetch cards in the evolutionary line
+          if (cardData.evolvesFrom) {
+            relatedQueries.push(query(collection(db, 'cards'), where('name', '==', cardData.evolvesFrom)));
+          }
+          if (cardData.evolvesTo && cardData.evolvesTo.length > 0) {
+            cardData.evolvesTo.forEach(evo => {
+              relatedQueries.push(query(collection(db, 'cards'), where('name', '==', evo)));
+            });
+          }
+
+          // Fetch other versions from different sets
+          relatedQueries.push(query(collection(db, 'cards'), where('name', '==', cardData.name), where('set.id', '!=', cardData.set.id)));
+
+          const relatedCards = await Promise.all(relatedQueries.map(q => getDocs(q)));
+
+          relatedCards.forEach(querySnapshot => {
+            querySnapshot.forEach(doc => {
+              const relatedCardData = doc.data();
+              const relatedCardElement = document.createElement('div');
+              relatedCardElement.classList.add('related-card');
+
+              relatedCardElement.innerHTML = `
+                <img src="${relatedCardData.images?.small || '/path/to/placeholder-card.png'}" alt="${relatedCardData.name}">
+                <h3>${relatedCardData.name}</h3>
+              `;
+
+              relatedCardsContainer.appendChild(relatedCardElement);
+            });
+          });
+        } catch (error) {
+          console.error('Error fetching related cards:', error);
+        }
+      }
+
+      // Load card data on page load
+      window.onload = loadCardData;
+    </script>
+    <link rel="icon" href="/assets/images/icons/pageIcon2.png" type="image/png">
   </head>
   <body>
     <header>
       <div class="logo">
-        <img src="\assets\images\icons\pagelogo.png" alt="LilyCove Logo" style="height: 50px;"> <!-- Adjust 'height' as needed -->
+        <img src="\assets\images\icons\pagelogo.png" alt="LilyCove Logo" style="height: 50px;">
       </div>
       <input type="text" placeholder="Search for cards, sets, tcg" />
       <nav>
@@ -31,11 +122,8 @@
       </nav>
       <div class="user-icons">
         <i class="fas fa-user"></i>
-        <!-- User Icon -->
         <i class="fas fa-sign-out-alt"></i>
-        <!-- Logout Icon -->
         <i class="fas fa-bell"></i>
-        <!-- Notifications Icon -->
       </div>
     </header>
 
@@ -44,31 +132,23 @@
       <section class="card-info">
         <div class="card-details">
           <div class="card-text">
-            <h1>Squirtle</h1>
-            <p>Pokemon - SV: Scarlet & Violet 151</p>
-            <p>Art Rare - 170/165</p>
+            <h1>Card Name</h1>
+            <p>Card Type - Set Name</p>
+            <p>Rarity - Card Number</p>
           </div>
         </div>
       </section>
-      <hr class="divider" />
-      <!-- Divider line below the language options -->
+      <hr class="divider">
 
-      <!-- Flex container for the card image, price history, and previous sales -->
       <div class="card-data-container">
-        <!-- Card Image -->
         <div class="card-image-container">
-          <img
-            src="/assets/images/cards/squirtle.png"
-            alt="Squirtle Card"
-            class="card-image"
-          />
+          <img src="/path/to/placeholder-card.png" alt="Card Image" class="card-image">
         </div>
 
-        <!-- Price History Section -->
         <section class="price-history">
           <h2>Price History</h2>
           <div class="chart">
-            <!-- Chart Placeholder for Individual Price Graph -->
+            <!-- Placeholder for the price history chart -->
           </div>
           <div class="history-controls">
             <button>1M</button>
@@ -78,28 +158,10 @@
           </div>
         </section>
 
-        <!-- Previous Sales Section -->
         <section class="card-previous-sales">
           <h2>Previous Sales</h2>
           <div class="sales-list">
-            <div class="sale-item">
-              <img src="/assets/images/cards/squirtle.png" alt="Squirtle Small" />
-              <span>2024-08-12</span>
-              <span>$17.65</span>
-              <span>eBay</span>
-            </div>
-            <div class="sale-item">
-              <img src="/assets/images/cards/squirtle.png" alt="Squirtle Small" />
-              <span>2024-08-15</span>
-              <span>$19.09</span>
-              <span>eBay</span>
-            </div>
-            <div class="sale-item">
-              <img src="/assets/images/cards/squirtle.png" alt="Squirtle Small" />
-              <span>2024-08-16</span>
-              <span>$37.99</span>
-              <span>eBay</span>
-            </div>
+            <!-- Previous sales will be dynamically loaded here -->
           </div>
         </section>
       </div>
@@ -191,18 +253,12 @@
           </div>
         </div>
       </section>
-      <!-- Additional Information -->
+
+      <!-- Related Cards Section -->
       <section class="related-info">
         <h2>Related Cards</h2>
         <div class="related-cards">
-          <div class="related-card">
-            <img src="/assets/images/cards/wartortle.png" alt="Wartortle" />
-            <h3>Wartortle</h3>
-          </div>
-          <div class="related-card">
-            <img src="/assets/images/cards/blastoise.png" alt="Blastoise" />
-            <h3>Blastoise</h3>
-          </div>
+          <!-- Related cards will be dynamically loaded here -->
         </div>
       </section>
     </main>

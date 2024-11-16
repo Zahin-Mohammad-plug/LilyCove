@@ -47,7 +47,7 @@
 
           // Create card elements dynamically
           const cardElement = document.createElement('a');
-          cardElement.href = 'card.html'; // Adjust this to the correct card details URL
+          cardElement.href = `card.html?id=${doc.id}`; // Include the card ID in the URL
           cardElement.classList.add('cards-item');
           cardElement.setAttribute('data-name', cardData.name);
           cardElement.setAttribute('data-price', cardData.tcgplayer?.prices?.holofoil?.market || '0');
