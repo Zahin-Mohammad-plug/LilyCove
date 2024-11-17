@@ -4,11 +4,12 @@
   "description": "This project is a web-based application designed to track prices and provide listings for buying and selling Pokémon cards. The goal is to create a comprehensive and user-friendly platform for collectors and sellers to monitor card values and availability.",
   "main": "index.js",
   "scripts": {
-    "fetch": "node backend/fetchData.js",
-    "updateSeries": "node backend/CreateSeriesData.js",
-    "uploadToCloudinary": "node backend/upload2Cloudinary.js",    
-    "uploadToFB": "node backend/uploadFireBaseData.js",
-    "updateAll": "npm run fetch && npm run uploadToCloudinary && npm run uploadToFB"
+    "fetch": "node backend/1fetchData.js",
+    "updateSeries": "node backend/2CreateSeriesData.js",
+    "fix": "node backend/FindCloudinary.js",
+    "uploadToCloudinary": "node backend/3upload2Cloudinary.js",    
+    "uploadToFB": "node backend/4uploadFireBaseData.js",
+    "updateAll": "npm run fetch && npm run updateSeries && npm run uploadToCloudinary && npm run uploadToFB"
   },
   "keywords": [],
   "author": "Zahin Mohammad",

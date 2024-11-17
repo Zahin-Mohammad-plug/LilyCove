@@ -291,14 +291,7 @@ main {
   margin-bottom: 10px;
 }
 
-button {
-  background-color: #34a853;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 15px;
-  cursor: pointer;
-}
+
 
 /* Expansion Sets Grid */
 .expansion-header {
@@ -644,6 +637,33 @@ button {
 
 .search-bar button .icon-search {
   font-size: 1.2rem;
+}
+
+.cards-pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px; /* Adds spacing between the buttons */
+}
+
+.cards-pagination-button, .cards-page-number {
+  color: #7161a8; /* Purple background */
+  font-family: 'Oxanium', sans-serif;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.cards-pagination-button:hover, .cards-page-number:hover {
+  background-color: #5a4b91; /* Darker purple on hover */
+}
+
+.cards-page-number.active {
+  background-color: #4a417d; /* Even darker purple for the active cards-page */
+  color: #a21a1a;
+  border-color: #4a417d;
 }
 
 
