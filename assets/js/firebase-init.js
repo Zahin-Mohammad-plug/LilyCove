@@ -2,6 +2,8 @@
 // Import the functions you need from the SDKs
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+import { getFirestore, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,12 +20,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-// Enable offline persistence
+// Initialize Firestore
+const db = getFirestore(app); // Make sure db is initialized here
+
+// Enable IndexedDB Persistence
 enableIndexedDbPersistence(db)
+  .then(() => {
+    console.log("Offline persistence is enabled.");
+  })
   .catch((err) => {
     if (err.code === 'failed-precondition') {
       console.error("Persistence failed: Multiple tabs open.");
     } else if (err.code === 'unimplemented') {
       console.error("Persistence is not available in this browser.");
+    } else {
+      console.error("Error enabling persistence:", err);
     }
   });
